@@ -216,23 +216,6 @@
       <a href="./gallery.html">View My Gallery →</a>
     </div>
 
-    <section>
-      <h2>Login</h2>
-      <label for="email">Email</label>
-      <input id="email" type="email" placeholder="name@example.com" autocomplete="email" />
-
-      <label for="password">Password</label>
-      <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-
-      <div class="actions">
-        <button type="button" onclick="signIn()">Log In</button>
-        <button class="secondary" type="button" onclick="signUp()">Create Account</button>
-        <button class="secondary full" type="button" onclick="forgotPassword()">Forgot Password</button>
-        <button class="secondary full" type="button" onclick="signOut()">Log Out</button>
-      </div>
-
-      <div class="gps-box" id="authStatus">Not logged in.</div>
-    </section>
 
     <section>
       <h2>Sample Info</h2>
@@ -357,72 +340,6 @@
       closeUpImage: "closeup",
       otherImage: "other"
     };
-
-    async function checkAuth() {
-      const { data } = await supabaseClient.auth.getUser();
-      currentUser = data.user || null;
-      document.getElementById("authStatus").textContent = currentUser
-        ? `Logged in as ${currentUser.email}`
-        : "Not logged in.";
-    }
-
-    async function signUp() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      document.getElementById("authStatus").textContent = error
-        ? `Sign-up error: ${error.message}`
-        : "Account created. Check email if confirmation is required, then log in.";
-      await checkAuth();
-    }
-
-    async function signIn() {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value;
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      document.getElementById("authStatus").textContent = error
-        ? `Login error: ${error.message}`
-        : `Logged in as ${data.user.email}`;
-      await checkAuth();
-    }
-
-
-    async function forgotPassword() {
-      const email = document.getElementById("email").value.trim();
-      const status = document.getElementById("authStatus");
-
-      if (!email) {
-        status.textContent = "Enter your email address first, then tap Forgot Password.";
-        return;
-      }
-
-      status.textContent = "Sending password reset email...";
-
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: "https://melinda-ecoteraasia.github.io/ecoexposure-webapp_v1/reset-password.html"
-      });
-
-      if (error) {
-        status.textContent = "Password reset failed: " + error.message;
-        return;
-      }
-
-      status.textContent = "Password reset email sent. Check your inbox/spam folder.";
-    }
-
-    async function signOut() {
-      await supabaseClient.auth.signOut();
-      currentUser = null;
-      document.getElementById("authStatus").textContent = "Logged out.";
-    }
-
-    function sanitizeForFilename(input) {
-      return String(input || "")
-        .trim()
-        .replace(/\s+/g, "")
-        .replace(/[\\/:,]/g, "-")
-        .replace(/[^a-zA-Z0-9._-]/g, "");
-    }
 
     function todayFolderName() {
       const d = new Date();

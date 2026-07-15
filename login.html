@@ -1,0 +1,117 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoExposure Login</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+/* Copy the CSS from your existing page */
+</style>
+
+</head>
+<body>
+
+<main>
+
+<section>
+
+<h2>Login</h2>
+
+<label for="email">Email</label>
+<input
+    id="email"
+    type="email"
+    placeholder="name@example.com"
+    autocomplete="email">
+
+<label for="password">Password</label>
+<input
+    id="password"
+    type="password"
+    placeholder="Password"
+    autocomplete="current-password">
+
+<div class="actions">
+
+<button type="button" onclick="signIn()">
+Log In
+</button>
+
+<button class="secondary"
+        type="button"
+        onclick="signUp()">
+Create Account
+</button>
+
+<button class="secondary full"
+        type="button"
+        onclick="forgotPassword()">
+Forgot Password
+</button>
+
+<button class="secondary full"
+        type="button"
+        onclick="signOut()">
+Log Out
+</button>
+
+</div>
+
+<div class="gps-box" id="authStatus">
+Not logged in.
+</div>
+
+</section>
+
+</main>
+
+<script>
+
+const SUPABASE_URL =
+"https://qvmgrchkmmezpwhlfxjv.supabase.co";
+
+const SUPABASE_KEY =
+"YOUR_PUBLISHABLE_KEY";
+
+const supabaseClient =
+window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+let currentUser = null;
+
+
+async function checkAuth() {
+...
+}
+
+async function signUp() {
+...
+}
+
+async function signIn() {
+...
+}
+
+async function forgotPassword() {
+...
+}
+
+async function signOut() {
+...
+}
+
+
+checkAuth();
+
+</script>
+
+</body>
+</html>
