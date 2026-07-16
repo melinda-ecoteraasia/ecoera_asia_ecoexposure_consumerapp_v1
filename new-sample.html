@@ -17,6 +17,10 @@
     button{border:none;border-radius:10px;padding:11px 14px;font-size:.98rem;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;width:100%;margin-top:10px} button:hover{background:var(--accent-dark)}
     button.secondary{background:#e5e7eb;color:var(--text)} .top-nav{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}.top-nav a{color:var(--accent);font-weight:700;text-decoration:none}
     .status{margin-top:10px;color:var(--muted);font-size:.9rem}
+    dialog{border:none;border-radius:16px;padding:0;max-width:520px;width:calc(100% - 24px);box-shadow:0 18px 60px rgba(0,0,0,.28)}
+    dialog::backdrop{background:rgba(15,23,42,.66)}
+    .dialog-inner{padding:16px}.dialog-actions{display:flex;gap:10px}.dialog-actions button{width:auto;flex:1}
+    #qrReader{width:100%;min-height:260px;margin-top:12px}.kit-ok{color:#047857;font-weight:700}.kit-error{color:#b91c1c;font-weight:700}
   </style>
 </head>
 <body>
@@ -52,14 +56,28 @@
       <div id="saveStatus" class="status">No sample saved yet.</div>
     </section>
   </main>
+  <dialog id="qrDialog">
+    <div class="dialog-inner">
+      <h2>Scan EcoExposure Kit</h2>
+      <div id="qrReader"></div>
+      <label for="manualKitCode">Or enter the kit code</label>
+      <input id="manualKitCode" placeholder="EA-KIT-000001" autocomplete="off" />
+      <div id="qrDialogStatus" class="status"></div>
+      <div class="dialog-actions">
+        <button type="button" onclick="verifyManualKitCode()">Verify Code</button>
+        <button type="button" class="secondary" onclick="closeQRScanner()">Cancel</button>
+      </div>
+    </div>
+  </dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script>
     const SUPABASE_URL = "https://hakezadejldlvfkaaxbs.supabase.co";
     const SUPABASE_KEY = "sb_publishable_objAYX-6RRXLwOWra1a66g_dDthWovO";
-    const STORAGE_BUCKET = "ecotera_asia_ecoexposure_images";
+    const STORAGE_BUCKET = "ecoexposure_images";
     const TABLE_NAME = "samples";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let latitude = null, longitude = null, currentUser = null;
+    let latitude = null, longitude = null, currentUser = null, currentKit = null, qrScanner = null;
     const imageSlots = {topImage:"top",sideImage:"side",closeUpImage:"closeup",otherImage:"other"};
 
     async function requireLogin(){
@@ -68,7 +86,61 @@
       currentUser=data.user;
     }
 
-    function scanQRCode(){document.getElementById("qrStatus").textContent="QR scanner will be connected next.";}
+    async function scanQRCode(){
+      const dialog=document.getElementById("qrDialog");
+      document.getElementById("qrDialogStatus").textContent="";
+      document.getElementById("manualKitCode").value="";
+      dialog.showModal();
+      try{
+        qrScanner=new Html5Qrcode("qrReader");
+        await qrScanner.start(
+          {facingMode:"environment"},
+          {fps:10,qrbox:{width:220,height:220}},
+          async decodedText=>{
+            await verifyKitCode(decodedText);
+            if(currentKit) closeQRScanner();
+          },
+          ()=>{}
+        );
+      }catch(e){
+        document.getElementById("qrDialogStatus").textContent="Camera unavailable. Enter the kit code manually below.";
+      }
+    }
+
+    async function closeQRScanner(){
+      if(qrScanner){
+        try{if(qrScanner.isScanning)await qrScanner.stop();}catch(e){}
+        try{await qrScanner.clear();}catch(e){}
+        qrScanner=null;
+      }
+      document.getElementById("qrDialog").close();
+    }
+
+    async function verifyManualKitCode(){
+      await verifyKitCode(document.getElementById("manualKitCode").value);
+      if(currentKit) await closeQRScanner();
+    }
+
+    async function verifyKitCode(rawCode){
+      const code=String(rawCode||"").trim();
+      const dialogStatus=document.getElementById("qrDialogStatus");
+      const pageStatus=document.getElementById("qrStatus");
+      currentKit=null;
+      if(!code){dialogStatus.textContent="Enter or scan a kit code.";return;}
+      dialogStatus.textContent="Checking kit...";
+      const {data,error}=await supabaseClient.rpc("check_kit",{p_qr_token:code});
+      if(error){dialogStatus.textContent=`Kit check failed: ${error.message}`;return;}
+      const kit=data&&data[0]?data[0]:null;
+      if(!kit){dialogStatus.textContent="Kit code not recognized.";pageStatus.textContent="Kit not verified.";return;}
+      if(kit.kit_status!=="active"||kit.remaining_samples<=0){
+        dialogStatus.textContent="This kit has reached its sample limit or is inactive.";
+        pageStatus.innerHTML=`<span class="kit-error">${kit.kit_code}: no submissions remaining.</span>`;
+        return;
+      }
+      currentKit=kit;
+      pageStatus.innerHTML=`<span class="kit-ok">Verified: ${kit.kit_code} - ${kit.remaining_samples} submission${kit.remaining_samples===1?"":"s"} remaining.</span>`;
+      dialogStatus.textContent="Kit verified.";
+    }
 
     function captureGPS(){
       const box=document.getElementById("gpsStatus");
@@ -99,21 +171,38 @@
       if(!currentUser)await requireLogin();if(!currentUser)return;
       const userName=document.getElementById("userName").value.trim(),sampleID=document.getElementById("sampleID").value.trim();
       const hasImage=Object.keys(imageSlots).some(id=>{const i=document.getElementById(id);return i.files&&i.files.length>0;});
+      if(!currentKit){status.textContent="Scan and verify a kit QR code before saving.";return;}
       if(!userName||!sampleID||!hasImage){status.textContent="Required: User Name, Sample ID, and at least one image.";return;}
       try{
         status.textContent="Uploading photos...";
         const top_photo=await uploadOneImage("topImage","top"),side_photo=await uploadOneImage("sideImage","side"),closeup_photo=await uploadOneImage("closeUpImage","closeup"),other_photo=await uploadOneImage("otherImage","other");
         status.textContent="Saving sample...";
-        const entry={user_id:currentUser.id,user_name:userName,sample_id:sampleID,location:document.getElementById("location").value.trim(),water_type:document.getElementById("waterType").value,latitude,longitude,notes:document.getElementById("notes").value.trim(),top_photo,side_photo,closeup_photo,other_photo,minutes_since_reagent:document.getElementById("minutesSinceReagent").value?Number(document.getElementById("minutesSinceReagent").value):null};
-        const {error}=await supabaseClient.from(TABLE_NAME).insert(entry);if(error)throw new Error(`Database save failed: ${error.message}`);
-        status.textContent=`✅ Sample saved: ${sampleID}`;clearDraft(false);
+        const rpcArgs={
+          p_kit_id:currentKit.kit_id,
+          p_user_name:userName,
+          p_sample_label:sampleID,
+          p_location:document.getElementById("location").value.trim(),
+          p_water_type:document.getElementById("waterType").value,
+          p_latitude:latitude,
+          p_longitude:longitude,
+          p_notes:document.getElementById("notes").value.trim(),
+          p_top_photo:top_photo,
+          p_side_photo:side_photo,
+          p_closeup_photo:closeup_photo,
+          p_other_photo:other_photo,
+          p_minutes_since_reagent:document.getElementById("minutesSinceReagent").value?Number(document.getElementById("minutesSinceReagent").value):null
+        };
+        const {data,error}=await supabaseClient.rpc("save_sample_with_kit",rpcArgs);if(error)throw new Error(`Database save failed: ${error.message}`);
+        const result=data&&data[0]?data[0]:null;
+        status.textContent=`✅ Sample saved: ${sampleID}. ${result?result.remaining_samples:""} kit submission${result&&result.remaining_samples===1?"":"s"} remaining.`;
+        currentKit=null;clearDraft(false);
       }catch(e){status.textContent=e.message;}
     }
 
     function clearDraft(updateStatus=true){
       ["userName","location","sampleID","minutesSinceReagent","notes"].forEach(id=>document.getElementById(id).value="");document.getElementById("waterType").value="Other";
       Object.entries({topImage:"topPreview",sideImage:"sidePreview",closeUpImage:"closeUpPreview",otherImage:"otherPreview"}).forEach(([i,p])=>{document.getElementById(i).value="";const pr=document.getElementById(p);pr.style.display="none";pr.removeAttribute("src");});
-      latitude=null;longitude=null;document.getElementById("gpsStatus").textContent="No GPS location captured yet.";document.getElementById("qrStatus").textContent="Kit not yet verified.";if(updateStatus)document.getElementById("saveStatus").textContent="Draft cleared.";
+      latitude=null;longitude=null;currentKit=null;document.getElementById("gpsStatus").textContent="No GPS location captured yet.";document.getElementById("qrStatus").textContent="Kit not yet verified.";if(updateStatus)document.getElementById("saveStatus").textContent="Draft cleared.";
     }
 
     requireLogin();
