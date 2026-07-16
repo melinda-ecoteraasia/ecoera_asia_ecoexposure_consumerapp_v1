@@ -275,13 +275,16 @@
 
         const { data, error } = await supabaseClient
           .from(TABLE_NAME)
-          .select("*")
+          .select("*, kits(qr_token)")
           .eq("user_id", currentUser.id)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        loadedSamples = data || [];
+        loadedSamples = (data || []).map(sample => ({
+          ...sample,
+          kit_access_code: sample.kits?.qr_token || ""
+        }));
 
         document.getElementById("csvPreview").textContent =
           loadedSamples.length ? makeCSV(loadedSamples) : "No saved entries found.";
@@ -301,7 +304,7 @@
         .from(BUCKET_NAME)
         .createSignedUrl(path, 60 * 60);
 
-      if (error) return null;
+      if (error) { console.error("Signed URL error:", error); return null; }
 
       return data.signedUrl;
     }
@@ -333,7 +336,7 @@
             <strong>Water Type:</strong> ${escapeHTML(sample.water_type || "")}<br>
             <strong>Minutes Since Reagent:</strong> ${escapeHTML(sample.minutes_since_reagent ?? "")}<br>
             <strong>GPS:</strong> ${escapeHTML(sample.latitude ?? "")}, ${escapeHTML(sample.longitude ?? "")}<br>
-            <strong>Kit Code:</strong> ${escapeHTML(sample.kit_code || "")}<br>
+            <strong>Kit Access Code:</strong> ${escapeHTML(sample.kits?.qr_token || "")}<br>
             <strong>Notes:</strong> ${escapeHTML(sample.notes || "")}
           </div>
         `;
