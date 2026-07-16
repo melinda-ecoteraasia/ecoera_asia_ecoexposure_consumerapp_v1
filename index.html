@@ -127,7 +127,8 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
 <body class="bg-background text-on-surface font-body-md selection:bg-secondary-container">
 
 <!-- Welcome Popup -->
@@ -167,9 +168,18 @@
 <button class="hover:bg-surface-container-high/50 transition-colors p-2 rounded-full active:scale-95 duration-150">
 <span class="material-symbols-outlined text-on-surface-variant" data-icon="search">search</span>
 </button>
-<button class="hover:bg-surface-container-high/50 transition-colors p-2 rounded-full active:scale-95 duration-150">
+<div class="relative">
+<button id="accountMenuButton" type="button" onclick="toggleAccountMenu()" aria-label="Open account menu" aria-expanded="false"
+class="hover:bg-surface-container-high/50 transition-colors p-2 rounded-full active:scale-95 duration-150">
 <span class="material-symbols-outlined text-on-surface-variant" data-icon="account_circle">account_circle</span>
 </button>
+<div id="accountMenu" class="hidden absolute right-0 mt-2 w-56 bg-white border border-outline-variant rounded-xl shadow-xl overflow-hidden z-[100]">
+<div id="accountEmail" class="px-4 py-3 text-sm text-on-surface-variant border-b border-outline-variant">Checking account...</div>
+<a href="account.html" class="block px-4 py-3 hover:bg-surface-container-low font-semibold">My Account</a>
+<a href="my-samples.html" class="block px-4 py-3 hover:bg-surface-container-low font-semibold">My Samples</a>
+<button type="button" onclick="signOutFromHome()" class="w-full text-left px-4 py-3 hover:bg-surface-container-low font-semibold text-error">Log Out</button>
+</div>
+</div>
 </div>
 </header>
 <main class="pb-32 pt-lg">
@@ -184,11 +194,10 @@
       ➕ New Sample
     </a>
 
-    <button
-      onclick="alert('My Samples coming soon!')"
-      class="bg-white border border-outline rounded-xl py-4 font-bold shadow hover:bg-gray-50 transition">
+    <a href="my-samples.html"
+      class="bg-white border border-outline rounded-xl py-4 text-center font-bold shadow hover:bg-gray-50 transition">
       🖼 My Samples
-    </button>
+    </a>
 
   </div>
 </section>
@@ -305,27 +314,33 @@ Explore Sample <span class="material-symbols-outlined" data-icon="arrow_forward"
 </div>
 </main>
 <!-- BottomNavBar -->
-<nav class="bg-white/95 dark:bg-surface-container-highest/95 fixed bottom-0 w-full z-50 backdrop-blur-lg border-t border-outline-variant/30 shadow-[0_-4px_16px_rgba(0,22,41,0.04)] flex justify-around items-center px-2 pb-safe-area-inset-bottom h-20">
-<!-- Explore (Active) -->
-<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-200" href="#">
-<span class="material-symbols-outlined" data-icon="explore" style="font-variation-settings: 'FILL' 1;">explore</span>
-<span class="font-label-caps text-label-caps">Explore</span>
+<nav class="bg-white/95 dark:bg-surface-container-highest/95 fixed bottom-0 w-full z-50 backdrop-blur-lg border-t border-outline-variant/30 shadow-[0_-4px_16px_rgba(0,22,41,0.04)] flex justify-around items-center px-1 pb-safe-area-inset-bottom h-20">
+
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-3 py-1 active:scale-90 transition-all duration-200" href="index.html">
+<span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
 </a>
-<!-- Compare -->
-<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="#">
-<span class="material-symbols-outlined" data-icon="compare_arrows">compare_arrows</span>
-<span class="font-label-caps text-label-caps">Compare</span>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="new-sample.html">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-caps text-label-caps">New Sample</span>
 </a>
-<!-- Learn -->
-<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="#">
-<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="my-samples.html">
+<span class="material-symbols-outlined">photo_library</span>
+<span class="font-label-caps text-label-caps">My Samples</span>
+</a>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="#" onclick="event.preventDefault(); alert('Learn section coming soon!');">
+<span class="material-symbols-outlined">menu_book</span>
 <span class="font-label-caps text-label-caps">Learn</span>
 </a>
-<!-- Join Pilot -->
-<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="#">
-<span class="material-symbols-outlined" data-icon="group_add">group_add</span>
-<span class="font-label-caps text-label-caps">Join Pilot</span>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-3 py-1 hover:text-primary active:scale-90 transition-all duration-200" href="account.html">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-caps text-label-caps">Account</span>
 </a>
+
 </nav>
 <script>
         // Micro-interactions for horizontal scroll
@@ -358,6 +373,56 @@ Explore Sample <span class="material-symbols-outlined" data-icon="arrow_forward"
   function closeWelcomePopup() {
     document.getElementById("welcomePopup").style.display = "none";
   }
+</script>
+
+
+<script>
+  const SUPABASE_URL = "https://hakezadejldlvfkaaxbs.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_objAYX-6RRXLwOWra1a66g_dDthWovO";
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  function toggleAccountMenu() {
+    const menu = document.getElementById("accountMenu");
+    const button = document.getElementById("accountMenuButton");
+    const willOpen = menu.classList.contains("hidden");
+    menu.classList.toggle("hidden");
+    button.setAttribute("aria-expanded", String(willOpen));
+  }
+
+  document.addEventListener("click", (event) => {
+    const menu = document.getElementById("accountMenu");
+    const button = document.getElementById("accountMenuButton");
+    if (!menu || !button) return;
+    if (!menu.contains(event.target) && !button.contains(event.target)) {
+      menu.classList.add("hidden");
+      button.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  async function initializeHomeAccount() {
+    const emailBox = document.getElementById("accountEmail");
+    const { data, error } = await supabaseClient.auth.getUser();
+
+    if (error || !data.user) {
+      emailBox.textContent = "Not logged in";
+      return;
+    }
+
+    emailBox.textContent = data.user.email;
+  }
+
+  async function signOutFromHome() {
+    const { error } = await supabaseClient.auth.signOut();
+
+    if (error) {
+      alert("Logout failed: " + error.message);
+      return;
+    }
+
+    window.location.replace("login.html");
+  }
+
+  initializeHomeAccount();
 </script>
 
 </body>
