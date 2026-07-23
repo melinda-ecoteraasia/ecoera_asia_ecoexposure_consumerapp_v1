@@ -112,7 +112,13 @@
     const TABLE_NAME = "samples";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let latitude = null, longitude = null, currentUser = null, currentKit = null, qrScanner = null;
-    const imageSlots = {topImage:"top",sideImage:"side",closeUpImage:"closeup",otherImage:"other"};
+const imageSlots = {
+    topImage:"top",
+    topGridImage:"top_grid",
+    sideImage:"side",
+    closeUpImage:"closeup",
+    otherImage:"other"
+};
 
     async function requireLogin(){
       const {data,error}=await supabaseClient.auth.getUser();
@@ -252,7 +258,11 @@
       if(!userName||!sampleID||!captureStage ||!hasImage){status.textContent="Required: User Name, Sample ID, Capture Stage, and at least one image.";return;}
       try{
         status.textContent="Uploading photos...";
-        const top_photo=await uploadOneImage("topImage","top"),top_grid_photo=await uploadOneImage("topgridImage","topgrid"), side_photo=await uploadOneImage("sideImage","side"),closeup_photo=await uploadOneImage("closeUpImage","closeup"),other_photo=await uploadOneImage("otherImage","other");
+       const top_photo = await uploadOneImage("topImage","top"),
+      top_grid_photo = await uploadOneImage("topGridImage","top_grid"),
+      side_photo = await uploadOneImage("sideImage","side"),
+      closeup_photo = await uploadOneImage("closeUpImage","closeup"),
+      other_photo = await uploadOneImage("otherImage","other");;
         status.textContent="Saving sample...";
         const rpcArgs={
           p_kit_id:currentKit.kit_id,
