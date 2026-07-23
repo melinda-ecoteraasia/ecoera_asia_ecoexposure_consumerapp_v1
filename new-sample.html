@@ -264,7 +264,8 @@
           p_side_photo:side_photo,
           p_closeup_photo:closeup_photo,
           p_other_photo:other_photo,
-          p_minutes_since_reagent:document.getElementById("minutesSinceReagent").value?Number(document.getElementById("minutesSinceReagent").value):null
+	  p_capture_stage: captureStage,
+	  p_top_grid_photo: top_grid_photo,
         };
         const {data,error}=await supabaseClient.rpc("save_sample_with_kit",rpcArgs);if(error)throw new Error(`Database save failed: ${error.message}`);
         const result=data&&data[0]?data[0]:null;
@@ -274,7 +275,7 @@
     }
 
     function clearDraft(updateStatus=true){
-      ["userName","location","sampleID","minutesSinceReagent","notes"].forEach(id=>document.getElementById(id).value="");document.getElementById("waterType").value="Other";
+      ["userName","location","sampleID","notes"].forEach(id=>document.getElementById(id).value="");document.getElementById("waterType").value="Other";
       Object.entries({topImage:"topPreview",sideImage:"sidePreview",closeUpImage:"closeUpPreview",otherImage:"otherPreview"}).forEach(([i,p])=>{document.getElementById(i).value="";const pr=document.getElementById(p);pr.style.display="none";pr.removeAttribute("src");});
       latitude=null;longitude=null;currentKit=null;document.getElementById("gpsStatus").textContent="No GPS location captured yet.";document.getElementById("qrStatus").textContent="Kit not yet verified.";if(updateStatus)document.getElementById("saveStatus").textContent="Draft cleared.";
     }
